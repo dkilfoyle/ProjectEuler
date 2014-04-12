@@ -1,0 +1,215 @@
+Project Euler Solutions in R
+========================================================
+
+# Problem #1
+
+Find the sum of all multiples of 3 and 5 below 1000
+
+## Answer
+
+Add multiple of 3 + multiples of 5 but take away those that were counted twice (ie multiples of 3*5=15)
+
+```{r prob1}
+sum(which((1:999)%%3==0)) + 
+  sum(which((1:999)%%5==0)) -
+  sum(which((1:999)%%15==0))
+```
+
+# Problem #2
+
+Find the sum of all even fibonacci numbers under 4 million
+
+## Answer
+
+```{r prob2}
+a = 1
+b = 2
+ans = 0
+while (b < 4000000) {
+  if (b%%2 == 0) ans = ans + b
+  c = a + b
+  a = b
+  b = c
+}
+ans
+```
+
+# Problem #3
+
+Find the largest prime factor of 600851475143 
+
+## Answer
+
+```{r prob3}
+source("utils.r")
+n=600851475143
+max(trial_division(n))
+```
+
+# Problem #4
+
+Find the largest palindrome from the product of two 3 digit numbers
+
+## Answer
+
+```{r prob4}
+
+find.palindrome <- function () {
+  cur.ans = 0
+  for (i in 999:100) {
+    for (j in i:100) {
+      k = strsplit(as.character(i * j),"")[[1]]
+      s1 = paste(k[1:floor(length(k)/2)],collapse="")
+      s2 = paste(k[length(k):(ceiling(length(k)/2)+1)],collapse="")
+      #cat(s1,s2,"\n")
+      if (s1 == s2) cur.ans = max(cur.ans, i*j)
+    }
+  }
+  cur.ans
+}
+find.palindrome()
+```
+
+# Problem #5
+
+Find the smallest number evenly divisible by all the numbers 1 to 20
+
+## Answer
+
+```{r prob5}
+source("utils.r")
+problem5 <- function () {
+  n=2520 # we are given that 2520 is smallest disvible by 1 to 10
+  # our answer must be some multiple of 2520
+  # so check each multiple for divisibility in 11:20
+  bFound = F
+  while (bFound == F) {
+    n = n + 2520
+    bDivis = T
+    for (i in 11:20) {
+      if ((n %% i) != 0) {
+        bDivis = F
+        break
+      }
+    }
+    if (bDivis == T) bFound = T
+  }
+  n
+}
+problem5()
+```
+
+# Problem #6
+
+Find the difference between the sum of the squares of the first 100 numbers and the square of the sum
+
+## Answer
+
+```{r prob6}
+prob6 = function() {
+  sum((1:100)^2) - (sum(1:100))^2
+}
+prob6()
+```
+
+# Problem #7
+
+Find the 10001st prime
+
+## Answer
+
+```{r prob7}
+source("utils.r")
+prob7 = function() {
+  # estimate we will need to check 10001 * ln(10001) numbers
+  # actually this will underestimate so inflate by 20%
+  x = prime_sieve(10001 * log(10001) * 1.2)
+  x[10001]
+}
+prob7()
+```
+
+# Problem #8
+
+Find the greatest product of 5 consecutive digits in a large number
+
+## Answer
+
+```{r prob8}
+prob8 = function() {
+  n = as.numeric(strsplit("7316717653133062491922511967442657474235534919493496983520312774506326239578318016984801869478851843858615607891129494954595017379583319528532088055111254069874715852386305071569329096329522744304355766896648950445244523161731856403098711121722383113622298934233803081353362766142828064444866452387493035890729629049156044077239071381051585930796086670172427121883998797908792274921901699720888093776657273330010533678812202354218097512545405947522435258490771167055601360483958644670632441572215539753697817977846174064955149290862569321978468622482839722413756570560574902614079729686524145351004748216637048440319989000889524345065854122758866688116427171479924442928230863465674813919123162824586178664583591245665294765456828489128831426076900422421902267105562632111110937054421750694165896040807198403850962455444362981230987879927244284909188845801561660979191338754992005240636899125607176060588611646710940507754100225698315520005593572972571636269561882670428252483600823257530420752963450","")[[1]])
+  i=1
+  ibest=1
+  curbest = n[i]*n[i+1]*n[i+2]*n[i+3]*n[i+4]
+  i=6
+  while (i < 996) {
+    #cat(i,"\n")
+    if (n[i]==0) {
+      i=i+5
+      next()
+    }
+    if (sum(n[i] < n[(i-5):(i-1)]) ==5) {
+      # n is less than the current lot so product cant be bigger
+      i=i+1
+      next()
+    }
+    thistry = n[i]*n[i+1]*n[i+2]*n[i+3]*n[i+4]
+    if (thistry > curbest) {
+      curbest = thistry
+      ibest = i
+    }
+    i=i+1
+  }
+  cat(curbest,ibest,n[ibest:(ibest+4)],"\n")
+}
+system.time(prob8())[3]
+
+```
+
+# Problem 9
+
+Find abc which is a pythagorean triple satisfying a+b+c=1000
+
+## Answer
+
+```{r prob9}
+prob9 = function() {
+  # Tips:
+  # the sum is always even
+  # c is odd
+  # one of a or b is odd
+  # one of a or b is div 3
+  # one of a or b is div 4
+  # a and b are < c
+  # a = c^2 - b^2
+  for (c in seq(from=999,to=1,by=-2)) {
+    for (a in 1:c) {
+      b = 1000 - a - c # to be a candidate
+      if (((a + b + c) %% 2) !=0) next()
+      # if ((a %% 2) == 0) & (b %% 2) ==0) next() # both are even = redundant
+      if (((a %% 3) != 0) && (b %% 3) != 0) next() # at least 1 is div3
+      if (((a %% 4) != 0) && (b %% 4) != 0) next() # at least 1 is div4
+      if (a^2 + b^2 == c^2) {
+        #cat(a,b,c,a^2,b^2,c^2,"\n")
+        return(a*b*c)
+      }
+    }
+  }
+}
+prob9()  
+```
+
+# Problem #10
+
+Find the sum of all primes < 2 million
+
+## Answer
+
+```{r prob10}
+prob10 = function() {
+  x = prime_sieve(2000000)
+  sum(as.numeric(x))
+}
+prob10()
+```
+
